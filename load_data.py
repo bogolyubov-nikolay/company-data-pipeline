@@ -1,9 +1,12 @@
 import json
+import os
 from pathlib import Path
 import psycopg2
+from dotenv import load_dotenv
 
-# ВАЖНО: укажите свой реальный пароль
-DATABASE_URL = "postgresql://postgres.swgutpssbzkjzehtoqtx:nzjSDGZzxFTxqc0u@aws-0-eu-central-1.pooler.supabase.com:5432/postgres"
+load_dotenv('.env.local')
+
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 DATA_DIR = Path(__file__).parent / 'data'
 
@@ -12,8 +15,7 @@ def read_json_files(directory: Path):
     for file_path in sorted(directory.glob('page_*.json')):
         with open(file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
-            items = data.get('items', [])
-            records.extend(items)
+            records.extend(data.get('items', []))
     return records
 
 def deduplicate(records):
@@ -31,7 +33,7 @@ def main():
     print(f"Уникальных записей после дедупликации: {len(unique_records)}")
 
     conn = psycopg2.connect(DATABASE_URL)
-    conn.autocommit = False
+    conn.autocommit = True
     cursor = conn.cursor()
 
     create_table_query = """
@@ -51,7 +53,6 @@ def main():
     CREATE INDEX IF NOT EXISTS idx_companies_name ON companies(name);
     """
     cursor.execute(create_table_query)
-    conn.commit()
     print("Таблица companies создана.")
 
     insert_query = """
@@ -68,7 +69,7 @@ def main():
         phone = EXCLUDED.phone;
     """
 
-    print("Загружаю данные в PostgreSQL...")
+    data_to_insert = []
     for rec in unique_records:
         rating = rec.get('rating')
         if rating is not None:
@@ -84,7 +85,7 @@ def main():
             except (TypeError, ValueError):
                 reviews_count = 0
 
-        cursor.execute(insert_query, (
+        data_to_insert.append((
             rec['id'],
             rec.get('name'),
             rec.get('category'),
@@ -96,7 +97,14 @@ def main():
             rec.get('phone')
         ))
 
-    conn.commit()
+    print("Загружаю данные в PostgreSQL...")
+    try:
+        cursor.executemany(insert_query, data_to_insert)
+    except Exception as e:
+        print(f"Пакетная вставка не удалась ({e}), пробую по одной...")
+        for item in data_to_insert:
+            cursor.execute(insert_query, item)
+
     cursor.close()
     conn.close()
     print("Загрузка завершена успешно!")
