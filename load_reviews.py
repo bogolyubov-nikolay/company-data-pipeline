@@ -1,14 +1,17 @@
 import csv
+import os
 import psycopg2
+from dotenv import load_dotenv
 
-# Строка подключения (та же, что для load_data.py)
-DATABASE_URL = "postgresql://postgres.swgutpssbzkjzehtoqtx:nzjSDGZzxFTxqc0u@aws-0-eu-central-1.pooler.supabase.com:5432/postgres"
+load_dotenv('.env.local')
+
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 def main():
     conn = psycopg2.connect(DATABASE_URL)
+    conn.autocommit = True
     cursor = conn.cursor()
 
-    # Создаём таблицу reviews с текстовыми полями, чтобы принять все аномалии
     create_table_query = """
     CREATE TABLE IF NOT EXISTS reviews (
         id TEXT,
@@ -23,11 +26,9 @@ def main():
     );
     """
     cursor.execute(create_table_query)
-    conn.commit()
     print("Таблица reviews создана.")
 
-    # Читаем review.csv
-    with open('review.csv', 'r', encoding='utf-8') as f:
+    with open('data/review.csv', 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         rows = list(reader)
 
@@ -38,20 +39,25 @@ def main():
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
 
-    for row in rows:
-        cursor.execute(insert_query, (
-            row.get('id'),
-            row.get('name'),
-            row.get('category'),
-            row.get('city'),
-            row.get('address'),
-            row.get('rating'),
-            row.get('reviews_count'),
-            row.get('site'),
-            row.get('phone')
-        ))
+    data_to_insert = [(
+        row.get('id'),
+        row.get('name'),
+        row.get('category'),
+        row.get('city'),
+        row.get('address'),
+        row.get('rating'),
+        row.get('reviews_count'),
+        row.get('site'),
+        row.get('phone')
+    ) for row in rows]
 
-    conn.commit()
+    try:
+        cursor.executemany(insert_query, data_to_insert)
+    except Exception as e:
+        print(f"Пакетная вставка не удалась ({e}), пробую по одной...")
+        for item in data_to_insert:
+            cursor.execute(insert_query, item)
+
     cursor.close()
     conn.close()
     print("Загрузка review.csv завершена.")
