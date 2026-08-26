@@ -23,3 +23,14 @@
 5. Перейдите в папку `next-app`, установите зависимости: `npm install`
 6. Запустите приложение: `npm run dev`
 7. Откройте страницу: `http://localhost:3000/companies`
+8. ## Скриншоты
+
+### Веб-страница
+![Все компании](companies-page-all.jfif)
+![Поиск по названию](companies-page-search.jfif)
+![Фильтр по городу](companies-page-filter.jfif)
+
+### SQL-запросы
+![Топ-5 категорий](sql-top-categories.jfif)
+![Средний рейтинг по городам](sql-avg-rating.jfif)
+![Доля компаний с сайтом](sql-site-share.jfif)
