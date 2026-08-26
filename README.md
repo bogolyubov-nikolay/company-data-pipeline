@@ -16,14 +16,29 @@
 - Git / GitHub
 
 ## Как запустить
-1. Установите зависимости: `pip install psycopg2-binary`
-2. Создайте базу данных (например, бесплатный проект Supabase) и укажите строку подключения в `.env.local`
-3. Выполните: `python load_data.py`
-4. Для загрузки дополнительных данных: `python load_reviews.py`
-5. Перейдите в папку `next-app`, установите зависимости: `npm install`
-6. Запустите приложение: `npm run dev`
-7. Откройте страницу: `http://localhost:3000/companies`
-8. ## Скриншоты
+
+1. Установите зависимости Python:
+   pip install psycopg2-binary python-dotenv
+
+2. В корне проекта создайте файл .env.local и укажите строку подключения к PostgreSQL (Supabase):
+   DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@your-db.supabase.co:5432/postgres
+
+3. Загрузите данные:
+   python load_data.py
+   python load_reviews.py
+
+4. Перейдите в папку next-app:
+   cd next-app
+
+5. Внутри next-app тоже создайте файл .env.local с той же строкой подключения.
+
+6. Установите зависимости и запустите приложение:
+   npm install
+   npm run dev
+
+7. Откройте http://localhost:3000/companies
+
+## Скриншоты
 
 ### Веб-страница
 ![Все компании](companies-page-all.jfif)
@@ -34,3 +49,9 @@
 ![Топ-5 категорий](sql-top-categories.jfif)
 ![Средний рейтинг по городам](sql-avg-rating.jfif)
 ![Доля компаний с сайтом](sql-site-share.jfif)
+
+## Автор
+
+Николай Боголюбов  
+Email: bnikolai82@mail.ru  
+Telegram: [@bogolyubov_n](https://t.me/bogolyubov_n)
